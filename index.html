@@ -438,16 +438,13 @@ header {
 .profile-menu-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; flex-shrink: 0; }
 .profile-menu-divider { height: 1px; background: var(--border); margin: 0; }
 .card-fav {
-  position: absolute; top: 12px; right: 12px;
-  width: 32px; height: 32px; border-radius: 50%;
-  border: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+  border: none; background: none; padding: 0;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s ease; z-index: 2; padding: 0;
+  transition: all 0.2s ease;
 }
 .card-fav svg { width: 16px; height: 16px; stroke: var(--text-muted); fill: none; transition: all 0.2s ease; }
 .card-fav:hover svg { stroke: #f472b6; }
 .card-fav.active svg { stroke: #ec4899; fill: #ec4899; }
-.card-fav.active { background: rgba(236,72,153,0.2); }
 .modal-fav {
   display: flex; align-items: center; gap: 6px;
   padding: 8px 14px; border-radius: var(--radius-sm);
@@ -1916,7 +1913,8 @@ createCard = function(soul, index) {
     favBtn.className = 'card-fav' + (userFavorites.has(soul.id) ? ' active' : '');
     favBtn.innerHTML = '<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>';
     favBtn.onclick = (e) => toggleFavFromCard(e, soul.id);
-    card.appendChild(favBtn);
+    const footerActions = card.querySelector('.card-footer > div');
+    if (footerActions) footerActions.prepend(favBtn);
   }
   return card;
 };
