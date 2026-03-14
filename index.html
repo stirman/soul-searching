@@ -653,7 +653,7 @@ footer a:hover { color: #c084fc; }
       Soul Searching
     </a>
     <div class="header-links">
-      <a href="#" onclick="document.getElementById('guide-modal').classList.add('active');return false;" style="text-decoration:none;color:var(--text-secondary);font-weight:500;font-size:14px;transition:color 0.2s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">How It Works</a>
+      <a href="#" onclick="document.getElementById('guide-overlay').classList.add('open');return false;" style="text-decoration:none;color:var(--text-secondary);font-weight:500;font-size:14px;transition:color 0.2s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">How It Works</a>
 <!-- GitHub link removed -->
     </div>
   </div>
@@ -1501,14 +1501,15 @@ render();
 </script>
 
 <!-- Guide Modal -->
-<div id="guide-modal" class="modal" onclick="if(event.target===this)this.classList.remove('active')">
+<div id="guide-overlay" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+<div class="modal">
   <div class="modal-content" style="max-width:700px;">
     <div class="modal-header">
       <div>
         <div class="modal-category" style="background:var(--accent-purple);color:white;">GUIDE</div>
         <h2 class="modal-title" style="margin-top:8px;">How to Use a Soul</h2>
       </div>
-      <button class="modal-close" onclick="document.getElementById('guide-modal').classList.remove('active')">&times;</button>
+      <button class="modal-close" onclick="document.getElementById('guide-overlay').classList.remove('open')">&times;</button>
     </div>
     <div class="modal-body" style="font-family:'JetBrains Mono','Inter',monospace;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text-primary);">
 <span style="color:var(--accent-purple);font-weight:700;font-size:16px;">## What is SOUL.md?</span>
@@ -1565,6 +1566,7 @@ Or add a quick shell alias:
 <code style="background:var(--bg-secondary);padding:12px 16px;border-radius:8px;display:block;margin:8px 0;border:1px solid var(--border);">  alias soul='cp souls/$1.md SOUL.md &amp;&amp; echo "Switched to $1"'
   # Usage: soul comedian</code></div>
   </div>
+</div>
 </div>
 
 </body>
