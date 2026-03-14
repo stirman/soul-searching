@@ -392,6 +392,74 @@ header {
 .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
 .empty-state p { font-size: 16px; }
 
+/* ── Auth ── */
+.auth-area { display: flex; align-items: center; gap: 12px; }
+.btn-signin {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: var(--radius-pill);
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-secondary); font-size: 14px; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn-signin:hover { border-color: var(--border-hover); color: var(--text-primary); background: var(--bg-secondary); }
+.btn-signin svg { width: 18px; height: 18px; }
+.profile-wrap { position: relative; }
+.profile-btn {
+  width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border);
+  padding: 0; background: var(--bg-secondary); cursor: pointer; overflow: hidden;
+  transition: border-color var(--transition);
+}
+.profile-btn:hover { border-color: var(--accent-purple); }
+.profile-btn img { width: 100%; height: 100%; object-fit: cover; }
+.profile-menu {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: var(--bg-modal); border: 1px solid var(--border);
+  border-radius: var(--radius); min-width: 220px;
+  box-shadow: var(--shadow-modal); opacity: 0; visibility: hidden;
+  transform: translateY(-4px); transition: all 0.2s ease; z-index: 100;
+}
+.profile-menu.open { opacity: 1; visibility: visible; transform: translateY(0); }
+.profile-menu-header {
+  padding: 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.profile-menu-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.profile-menu-info { flex: 1; min-width: 0; }
+.profile-menu-name { font-size: 14px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-menu-email { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; font-size: 14px; color: var(--text-secondary);
+  cursor: pointer; transition: all var(--transition); border: none;
+  background: none; width: 100%; font-family: inherit; text-align: left;
+}
+.profile-menu-item:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.profile-menu-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; flex-shrink: 0; }
+.profile-menu-divider { height: 1px; background: var(--border); margin: 0; }
+.card-fav {
+  position: absolute; top: 12px; right: 12px;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease; z-index: 2; padding: 0;
+}
+.card-fav svg { width: 16px; height: 16px; stroke: var(--text-muted); fill: none; transition: all 0.2s ease; }
+.card-fav:hover svg { stroke: #f472b6; }
+.card-fav.active svg { stroke: #ec4899; fill: #ec4899; }
+.card-fav.active { background: rgba(236,72,153,0.2); }
+.modal-fav {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-secondary); font-size: 13px; font-weight: 500;
+  font-family: inherit; cursor: pointer; transition: all var(--transition);
+}
+.modal-fav:hover { border-color: #ec4899; color: #ec4899; }
+.modal-fav.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,0.08); }
+.modal-fav svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
+.modal-fav.active svg { fill: #ec4899; }
+
 /* ── Modal ── */
 .modal-overlay {
   position: fixed;
@@ -649,6 +717,9 @@ footer a:hover { color: #c084fc; }
 </style>
 <script async src="https://plausible.io/js/pa-DU9oyIJHC_mWVz50x6gPv.js"></script>
 <script>window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <div class="ambient-bg"></div>
@@ -661,7 +732,35 @@ footer a:hover { color: #c084fc; }
     </a>
     <div class="header-links">
       <a href="#" onclick="document.getElementById('guide-overlay').classList.add('open');return false;" style="text-decoration:none;color:var(--text-secondary);font-weight:500;font-size:14px;transition:color 0.2s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">How It Works</a>
-<!-- GitHub link removed -->
+      <div class="auth-area">
+        <button class="btn-signin" id="btn-signin" onclick="signInWithGoogle()" style="display:none;">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A11.96 11.96 0 001 12c0 1.94.46 3.77 1.18 5.43l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign in
+        </button>
+        <div class="profile-wrap" id="profile-wrap" style="display:none;">
+          <button class="profile-btn" id="profile-btn" onclick="toggleProfileMenu()">
+            <img id="profile-avatar" src="" alt="Profile">
+          </button>
+          <div class="profile-menu" id="profile-menu">
+            <div class="profile-menu-header">
+              <img class="profile-menu-avatar" id="menu-avatar" src="" alt="">
+              <div class="profile-menu-info">
+                <div class="profile-menu-name" id="menu-name"></div>
+                <div class="profile-menu-email" id="menu-email"></div>
+              </div>
+            </div>
+            <button class="profile-menu-item" onclick="showFavorites()">
+              <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+              My Favorites
+            </button>
+            <div class="profile-menu-divider"></div>
+            <button class="profile-menu-item" onclick="signOut()" style="color:#ef4444;">
+              <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </header>
@@ -686,6 +785,8 @@ footer a:hover { color: #c084fc; }
   <button class="filter-pill" data-category="technical"><span class="pill-emoji">&#128187;</span> Technical</button>
   <button class="filter-pill" data-category="funny"><span class="pill-emoji">&#128514;</span> Funny</button>
   <button class="filter-pill" data-category="specialized"><span class="pill-emoji">&#129488;</span> Specialized</button>
+  <button class="filter-pill" data-category="favorites" id="fav-filter" style="display:none;"><span class="pill-emoji">&#10084;&#65039;</span> Favorites</button>
+  <button class="filter-pill" id="btn-submit-soul" onclick="openSubmitModal()" style="margin-left:auto;border-color:var(--accent-purple);color:var(--accent-purple);display:none;">+ Submit a Soul</button>
 </div>
 
 <div class="results-bar">
@@ -717,9 +818,54 @@ footer a:hover { color: #c084fc; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Download .md
       </button>
+      <button class="modal-fav" id="btn-fav" onclick="toggleFavorite()" style="display:none;">
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <span id="fav-label">Favorite</span>
+      </button>
       <div class="modal-cli" id="modal-cli"></div>
     </div>
   </div>
+</div>
+
+<!-- Submit Soul Modal -->
+<div id="submit-overlay" class="modal-overlay" onclick="if(event.target===this)closeSubmitModal()">
+<div class="modal" style="max-width:640px;">
+  <div class="modal-header">
+    <div>
+      <h2 class="modal-title gradient-text" style="font-size:22px;">Submit a Soul</h2>
+    </div>
+    <button class="modal-close" onclick="closeSubmitModal()">&times;</button>
+  </div>
+  <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+    <div>
+      <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Soul Name *</label>
+      <input type="text" id="submit-name" placeholder="e.g. The Comedian" style="width:100%;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:15px;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent-purple)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div>
+      <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Category *</label>
+      <select id="submit-category" style="width:100%;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:15px;font-family:inherit;outline:none;cursor:pointer;">
+        <option value="professional">Professional</option>
+        <option value="creative">Creative</option>
+        <option value="technical">Technical</option>
+        <option value="funny">Funny</option>
+        <option value="specialized">Specialized</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">SOUL.md Content *</label>
+      <textarea id="submit-content" rows="12" placeholder="Paste your SOUL.md content here..." style="width:100%;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:14px;font-family:'JetBrains Mono',monospace;line-height:1.6;outline:none;resize:vertical;" onfocus="this.style.borderColor='var(--accent-purple)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div>
+      <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Description <span style="color:var(--text-muted);font-weight:400;">(optional — AI will generate if blank)</span></label>
+      <input type="text" id="submit-desc" placeholder="One-line summary of this soul's personality" style="width:100%;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:15px;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent-purple)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div>
+      <label style="font-size:13px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Tags <span style="color:var(--text-muted);font-weight:400;">(optional, comma-separated)</span></label>
+      <input type="text" id="submit-tags" placeholder="e.g. humor, witty, casual" style="width:100%;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:15px;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent-purple)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <button onclick="submitSoul()" style="padding:14px 24px;background:var(--accent-purple);color:white;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'" id="submit-btn">Submit Soul</button>
+  </div>
+</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1502,6 +1648,285 @@ document.getElementById('btn-download').addEventListener('click', () => {
   URL.revokeObjectURL(url);
   showToast('Downloaded!');
 });
+
+// ── Firebase Init ──
+firebase.initializeApp({
+  apiKey: "AIzaSyBpCtsOAUJgFeKHL3aVuX-bmUQXuXwWLRs",
+  authDomain: "soul-searching-8681f.firebaseapp.com",
+  projectId: "soul-searching-8681f",
+  storageBucket: "soul-searching-8681f.firebasestorage.app",
+  messagingSenderId: "1057178564939",
+  appId: "1:1057178564939:web:158ae9442862a3264ad0ce"
+});
+const auth = firebase.auth();
+const db = firebase.firestore();
+let currentUser = null;
+let userFavorites = new Set();
+let communitySouls = [];
+
+// ── Auth ──
+const btnSignin = document.getElementById('btn-signin');
+const profileWrap = document.getElementById('profile-wrap');
+const profileAvatar = document.getElementById('profile-avatar');
+const menuAvatar = document.getElementById('menu-avatar');
+const menuName = document.getElementById('menu-name');
+const menuEmail = document.getElementById('menu-email');
+const profileMenu = document.getElementById('profile-menu');
+const favFilter = document.getElementById('fav-filter');
+const btnSubmitSoul = document.getElementById('btn-submit-soul');
+const btnFav = document.getElementById('btn-fav');
+const favLabel = document.getElementById('fav-label');
+
+function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(err => {
+    console.error('Auth error:', err);
+    showToast('Sign in failed — try again');
+  });
+}
+
+function signOut() {
+  auth.signOut();
+  profileMenu.classList.remove('open');
+}
+
+function toggleProfileMenu() {
+  profileMenu.classList.toggle('open');
+}
+
+// Close profile menu on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.profile-wrap')) profileMenu.classList.remove('open');
+});
+
+auth.onAuthStateChanged(async user => {
+  currentUser = user;
+  if (user) {
+    btnSignin.style.display = 'none';
+    profileWrap.style.display = 'block';
+    profileAvatar.src = user.photoURL || '';
+    menuAvatar.src = user.photoURL || '';
+    menuName.textContent = user.displayName || 'User';
+    menuEmail.textContent = user.email || '';
+    favFilter.style.display = '';
+    btnSubmitSoul.style.display = '';
+    btnFav.style.display = '';
+    await loadFavorites();
+    await loadCommunitySouls();
+    render();
+  } else {
+    btnSignin.style.display = '';
+    profileWrap.style.display = 'none';
+    favFilter.style.display = 'none';
+    btnSubmitSoul.style.display = 'none';
+    btnFav.style.display = 'none';
+    userFavorites.clear();
+    if (activeCategory === 'favorites') {
+      activeCategory = 'all';
+      document.querySelectorAll('.filter-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.category === 'all');
+      });
+    }
+    render();
+  }
+});
+
+// ── Favorites ──
+async function loadFavorites() {
+  if (!currentUser) return;
+  try {
+    const doc = await db.collection('users').doc(currentUser.uid).get();
+    if (doc.exists && doc.data().favorites) {
+      userFavorites = new Set(doc.data().favorites);
+    } else {
+      userFavorites = new Set();
+    }
+  } catch (e) { console.error('Load favorites error:', e); }
+}
+
+async function saveFavorites() {
+  if (!currentUser) return;
+  try {
+    await db.collection('users').doc(currentUser.uid).set({
+      favorites: Array.from(userFavorites),
+      displayName: currentUser.displayName || '',
+      photoURL: currentUser.photoURL || '',
+      email: currentUser.email || '',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } catch (e) { console.error('Save favorites error:', e); }
+}
+
+function toggleFavorite() {
+  if (!currentUser) { signInWithGoogle(); return; }
+  if (!currentSoul) return;
+  const id = currentSoul.id;
+  if (userFavorites.has(id)) {
+    userFavorites.delete(id);
+    showToast('Removed from favorites');
+  } else {
+    userFavorites.add(id);
+    showToast('Added to favorites!');
+  }
+  saveFavorites();
+  updateFavButton();
+  render();
+}
+
+function toggleFavFromCard(e, soulId) {
+  e.stopPropagation();
+  if (!currentUser) { signInWithGoogle(); return; }
+  if (userFavorites.has(soulId)) {
+    userFavorites.delete(soulId);
+    showToast('Removed from favorites');
+  } else {
+    userFavorites.add(soulId);
+    showToast('Added to favorites!');
+  }
+  saveFavorites();
+  render();
+}
+
+function updateFavButton() {
+  if (!currentSoul || !btnFav) return;
+  const isFav = userFavorites.has(currentSoul.id);
+  btnFav.classList.toggle('active', isFav);
+  favLabel.textContent = isFav ? 'Favorited' : 'Favorite';
+}
+
+function showFavorites() {
+  profileMenu.classList.remove('open');
+  activeCategory = 'favorites';
+  document.querySelectorAll('.filter-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.category === 'favorites');
+  });
+  render();
+}
+
+// ── Community Souls (Firestore) ──
+async function loadCommunitySouls() {
+  try {
+    const snap = await db.collection('souls').where('status', '==', 'approved').get();
+    communitySouls = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      communitySouls.push({
+        id: doc.id,
+        name: d.name,
+        category: d.category || 'specialized',
+        description: d.description || 'A community-submitted soul.',
+        tags: d.tags || [],
+        author: d.authorName || 'Community',
+        stars: d.stars || 0,
+        soul: d.content,
+        community: true
+      });
+    });
+    render();
+  } catch (e) { console.error('Load community souls:', e); }
+}
+
+// ── Submit Soul ──
+function openSubmitModal() {
+  if (!currentUser) { signInWithGoogle(); return; }
+  document.getElementById('submit-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSubmitModal() {
+  document.getElementById('submit-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function submitSoul() {
+  const name = document.getElementById('submit-name').value.trim();
+  const category = document.getElementById('submit-category').value;
+  const content = document.getElementById('submit-content').value.trim();
+  const desc = document.getElementById('submit-desc').value.trim();
+  const tagsRaw = document.getElementById('submit-tags').value.trim();
+
+  if (!name || !content) {
+    showToast('Name and content are required');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = 'Submitting...';
+  btn.disabled = true;
+
+  try {
+    const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
+    await db.collection('souls').add({
+      name,
+      category,
+      content,
+      description: desc || '',
+      tags,
+      authorName: currentUser.displayName || 'Anonymous',
+      authorEmail: currentUser.email || '',
+      authorUid: currentUser.uid,
+      authorPhoto: currentUser.photoURL || '',
+      stars: 0,
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('Soul submitted! It will appear after review.');
+    closeSubmitModal();
+    document.getElementById('submit-name').value = '';
+    document.getElementById('submit-content').value = '';
+    document.getElementById('submit-desc').value = '';
+    document.getElementById('submit-tags').value = '';
+  } catch (e) {
+    console.error('Submit error:', e);
+    showToast('Failed to submit — try again');
+  }
+
+  btn.textContent = 'Submit Soul';
+  btn.disabled = false;
+}
+
+// ── Override getFilteredSouls to include community + favorites ──
+const _origGetFiltered = getFilteredSouls;
+getFilteredSouls = function() {
+  const allSouls = [...SOULS, ...communitySouls];
+  return allSouls.filter(soul => {
+    if (activeCategory === 'favorites') {
+      return userFavorites.has(soul.id);
+    }
+    const matchesCategory = activeCategory === 'all' || soul.category === activeCategory;
+    if (!matchesCategory) return false;
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      soul.name.toLowerCase().includes(q) ||
+      soul.description.toLowerCase().includes(q) ||
+      soul.tags.some(t => t.toLowerCase().includes(q)) ||
+      soul.category.toLowerCase().includes(q) ||
+      soul.author.toLowerCase().includes(q)
+    );
+  });
+};
+
+// ── Override createCard to add fav button ──
+const _origCreateCard = createCard;
+createCard = function(soul, index) {
+  const card = _origCreateCard(soul, index);
+  if (currentUser) {
+    const favBtn = document.createElement('button');
+    favBtn.className = 'card-fav' + (userFavorites.has(soul.id) ? ' active' : '');
+    favBtn.innerHTML = '<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>';
+    favBtn.onclick = (e) => toggleFavFromCard(e, soul.id);
+    card.appendChild(favBtn);
+  }
+  return card;
+};
+
+// ── Override openModal to update fav state ──
+const _origOpenModal = openModal;
+openModal = function(soul) {
+  _origOpenModal(soul);
+  updateFavButton();
+};
 
 // ── Init ──
 render();
